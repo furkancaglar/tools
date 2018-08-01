@@ -83,6 +83,7 @@ func check__sig(sig []byte) (isSigCorrect bool) {
 
 //Bytes it turns struct to slice of bytes according to `Mugsoft Protocol`
 func (p *MUGSOFT) Bytes() []byte {
+	p.signature = [2]byte{'m', 'g'}
 	var data = make([]byte, m__sig__len)
 
 	data[pos__signature_start] = p.signature[0]
