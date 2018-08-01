@@ -1,5 +1,11 @@
 package protocol
 
+import (
+	"github.com/mugsoft/tools"
+	"io"
+	"fmt"
+)
+
 type MUGSOFT struct {
 	signature [2]byte
 	GameType  uint16
@@ -14,7 +20,7 @@ const (
 	//m__sig_end
 	m__sig_end = 'g'
 	//m__meta_len
-	m__meta_len = 5
+	m__meta_len = 7
 	//m__auth_key_len
 	m__auth_key_len = 36
 	//pos__signature_start pos__ stands for position
@@ -24,9 +30,9 @@ const (
 	//pos__game_id position
 	pos__game_id
 	//pos__cmd is command position
-	pos__cmd
+	pos__cmd = 4
 	//pos__data_len defines the position of the byte which has the value how many more bytes are on the way
-	pos__data_len
+	pos__data_len = 6
 )
 const (
 	//CMD_ERROR is the command 0 which stads for error
@@ -45,10 +51,23 @@ const (
 	CMD_ENDGAME
 )
 
-func (p *MUGSOFT) Unmarshal(data []byte) ERRCODE {
+func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	if !check__sig(data[:2]) {
 		return ERR_INVALID_SIG
 	}
+	var sig [2]byte
+	sig[0] = data[pos__signature_start]
+	sig[1] = data[pos__signature_end]
+	p.signature = sig
+	p.GameType = uint16(tools.LE2Int(data[pos__game_id:pos__cmd]))
+	p.CMD = uint16(tools.LE2Int(data[pos__cmd:pos__data_len]))
+	p.DataLen = tools.LE2Int(data[pos__data_len : pos__data_len+2])
+	p.Data = data[pos__data_len+2:]
+
+	if p.DataLen != uint(len(p.Data)) {
+		return ERR_DATA_LEN
+	}
+
 	return ERR_SUCCES
 }
 func check__sig(sig []byte) (isSigCorrect bool) {
@@ -57,4 +76,34 @@ func check__sig(sig []byte) (isSigCorrect bool) {
 		isSigCorrect = false
 	}
 	return
+}
+
+//Bytes it turns struct to slice of bytes according to `Mugsoft Protocol`
+func (p *MUGSOFT) Bytes() []byte {
+	var data = make([]byte, m__meta_len+p.DataLen)
+
+	data[pos__signature_start] = p.signature[0]
+	data[pos__signature_end] = p.signature[1]
+	data = append(data, tools.Int2LE(uint(p.GameType))[:]...)
+	data = append(data, tools.Int2LE(uint(p.CMD))[:]...)
+	data = append(data, tools.Int2LE(p.DataLen)[:]...)
+	data = append(data, p.Data...)
+
+	return data
+}
+
+//Scan it reads from `io.Reader` and fills the struct
+func (p *MUGSOFT) Scan(reader io.Reader) error {
+	var data []byte
+	_, err := reader.Read(data)
+	if nil != err {
+		return err
+	}
+
+	err_code := p.Parse(data)
+	if 0 != err_code {
+		return fmt.Errorf("Parse error code %v", err_code)
+	}
+
+	return nil
 }
