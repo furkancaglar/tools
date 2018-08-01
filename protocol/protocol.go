@@ -61,8 +61,8 @@ func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	p.signature = sig
 	p.GameType = uint16(tools.LE2Int(data[pos__game_id:pos__cmd]))
 	p.CMD = uint16(tools.LE2Int(data[pos__cmd:pos__data_len]))
-	p.DataLen = tools.LE2Int(data[pos__data_len : pos__data_len+2])
-	p.Data = data[pos__data_len+2:]
+	p.DataLen = tools.LE2Int(data[pos__data_len : pos__data_len+4])
+	p.Data = data[pos__data_len+4:]
 
 	if p.DataLen != uint(len(p.Data)) {
 		return ERR_DATA_LEN
@@ -84,8 +84,8 @@ func (p *MUGSOFT) Bytes() []byte {
 
 	data[pos__signature_start] = p.signature[0]
 	data[pos__signature_end] = p.signature[1]
-	data = append(data, tools.Int2LE(uint(p.GameType))[:]...)
-	data = append(data, tools.Int2LE(uint(p.CMD))[:]...)
+	data = append(data, tools.Int2LE(uint(p.GameType))[:2]...)
+	data = append(data, tools.Int2LE(uint(p.CMD))[:2]...)
 	data = append(data, tools.Int2LE(p.DataLen)[:]...)
 	data = append(data, p.Data...)
 
