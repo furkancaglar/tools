@@ -18,11 +18,14 @@ const (
 	//m__sig_start m__ stands for meta
 	m__sig_start = 'm'
 	//m__sig_end
-	m__sig_end = 'g'
+	m__sig_end  = 'g'
+	m__sig__len = 2
 	//m__meta_len
 	m__meta_len = 7
 	//m__auth_key_len
 	m__auth_key_len = 36
+)
+const (
 	//pos__signature_start pos__ stands for position
 	pos__signature_start = iota
 	//pos__signature_end position of second signature byte
@@ -80,13 +83,19 @@ func check__sig(sig []byte) (isSigCorrect bool) {
 
 //Bytes it turns struct to slice of bytes according to `Mugsoft Protocol`
 func (p *MUGSOFT) Bytes() []byte {
-	var data = make([]byte, m__meta_len+p.DataLen)
+	var data = make([]byte, m__sig__len)
 
 	data[pos__signature_start] = p.signature[0]
 	data[pos__signature_end] = p.signature[1]
-	data = append(data, tools.Int2LE(uint(p.GameType))[:2]...)
-	data = append(data, tools.Int2LE(uint(p.CMD))[:2]...)
-	data = append(data, tools.Int2LE(p.DataLen)[:]...)
+
+	game__type := tools.Int2LE(uint(p.GameType))
+	data = append(data, game__type[:2]...)
+
+	cmd := tools.Int2LE(uint(p.CMD))
+	data = append(data, cmd[:2]...)
+
+	data__len := tools.Int2LE(p.DataLen)
+	data = append(data, data__len[:]...)
 	data = append(data, p.Data...)
 
 	return data
