@@ -52,6 +52,10 @@ const (
 	CMD_WINNING
 	//CMD_ENDGAME
 	CMD_ENDGAME
+	//CMD_CARD
+	CMD_CARD
+	//CMD_PING
+	CMD_PING
 )
 
 func (p *MUGSOFT) Parse(data []byte) ERRCODE {
@@ -117,6 +121,7 @@ func (p *MUGSOFT) Scan(reader io.Reader) error {
 
 	var remaning__data__len = int(tools.LE2Int(meta[pos__data_len : pos__data_len+4]))
 consume__remaining:
+
 	var remaning__data = make([]byte, remaning__data__len)
 	n, err = reader.Read(remaning__data)
 	if nil != err {
@@ -130,7 +135,7 @@ consume__remaining:
 
 	err__code := p.Parse(total__data)
 	if 0 != err__code {
-		return fmt.Errorf("Parse error code %v", err__code)
+		return fmt.Errorf("parse error code %v", err__code)
 	}
 
 	return nil
