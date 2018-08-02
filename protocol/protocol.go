@@ -117,19 +117,26 @@ func (p *MUGSOFT) Scan(reader io.Reader) error {
 	if n != m__meta_len {
 		return fmt.Errorf("meta length is not rigth")
 	}
+
+	if !check__sig(meta[:2]) {
+		return fmt.Errorf("signature error")
+	}
+
 	total__data = append(total__data, meta...)
 
-	var remaning__data__len = int(tools.LE2Int(meta[pos__data_len : pos__data_len+4]))
+	var remainning__data__len = int(tools.LE2Int(meta[pos__data_len : pos__data_len+4]))
+	var remainning__data = make([]byte, remainning__data__len)
+
 consume__remaining:
 
-	var remaning__data = make([]byte, remaning__data__len)
-	n, err = reader.Read(remaning__data)
+	n, err = reader.Read(remainning__data[:remainning__data__len])
+	remainning__data__len -= n
 	if nil != err {
 		return err
 	}
-	total__data = append(total__data, remaning__data...)
-	if n < remaning__data__len {
-		remaning__data__len -= n
+	total__data = append(total__data, remainning__data[:n]...)
+	if remainning__data__len > 0 {
+
 		goto consume__remaining
 	}
 
