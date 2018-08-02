@@ -57,6 +57,11 @@ const (
 	//CMD_PING
 	CMD_PING
 )
+const (
+	_ uint16 = iota
+	GAME_TOMBALA
+	GAME_KENO
+)
 
 func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	if !check__sig(data[:2]) {
