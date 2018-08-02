@@ -21,7 +21,7 @@ const (
 	m__sig_end  = 'g'
 	m__sig__len = 2
 	//m__meta_len
-	m__meta_len = 7
+	m__meta_len = 10
 	//m__auth_key_len
 	m__auth_key_len = 36
 )
@@ -104,15 +104,33 @@ func (p *MUGSOFT) Bytes() []byte {
 
 //Scan it reads from `io.Reader` and fills the struct
 func (p *MUGSOFT) Scan(reader io.Reader) error {
-	var data []byte
-	_, err := reader.Read(data)
+	var total__data []byte
+	var meta = make([]byte, m__meta_len)
+	n, err := reader.Read(meta)
 	if nil != err {
 		return err
 	}
+	if n != m__meta_len {
+		return fmt.Errorf("meta length is not rigth")
+	}
+	total__data = append(total__data, meta...)
 
-	err_code := p.Parse(data)
-	if 0 != err_code {
-		return fmt.Errorf("Parse error code %v", err_code)
+	var remaning__data__len = int(tools.LE2Int(meta[pos__data_len : pos__data_len+4]))
+consume__remaining:
+	var remaning__data = make([]byte, remaning__data__len)
+	n, err = reader.Read(remaning__data)
+	if nil != err {
+		return err
+	}
+	total__data = append(total__data, remaning__data...)
+	if n < remaning__data__len {
+		remaning__data__len -= n
+		goto consume__remaining
+	}
+
+	err__code := p.Parse(total__data)
+	if 0 != err__code {
+		return fmt.Errorf("Parse error code %v", err__code)
 	}
 
 	return nil
