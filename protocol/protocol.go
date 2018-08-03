@@ -75,6 +75,18 @@ var game__map = map[GAME_TYPE]string{
 	GAME_KENO:    "KENO",
 }
 
+var command__map = map[COMMAND]string{
+	CMD_ERROR:     "ERROR",
+	CMD_HANDSHAKE: "HANDSHAKE",
+	CMD_KEYCHECK:  "KEY CHECK",
+	CMD_NEWGAME:   "NEW GAME",
+	CMD_NEWBALL:   "NEW BALL",
+	CMD_WINNING:   "WINNING",
+	CMD_ENDGAME:   "END GAME",
+	CMD_CARD:      "CARD",
+	CMD_PING:      "PING",
+}
+
 func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	if !check__sig(data[:2]) {
 		return ERR_INVALID_SIG
@@ -90,7 +102,13 @@ func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	}
 
 	p.GameType = game__type
-	p.CMD = COMMAND(tools.LE2Int(data[pos__cmd:pos__data_len]))
+
+	var cmd = COMMAND(tools.LE2Int(data[pos__cmd:pos__data_len]))
+	if !check__cmd(cmd) {
+		return ERR_COMMAND
+	}
+
+	p.CMD = cmd
 	p.DataLen = tools.LE2Int(data[pos__data_len : pos__data_len+4])
 	p.Data = data[pos__data_len+4:]
 
@@ -114,6 +132,14 @@ func check__game__type(game__type GAME_TYPE) bool {
 		return false
 	}
 
+	return true
+}
+
+func check__cmd(cmd COMMAND) bool {
+	_, ok := command__map[cmd]
+	if !ok {
+		return false
+	}
 	return true
 }
 

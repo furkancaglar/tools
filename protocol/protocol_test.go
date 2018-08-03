@@ -6,8 +6,6 @@ import (
 	"os"
 	"fmt"
 	"github.com/mugsoft/tools/bytesize"
-	"github.com/mugsoft/tools"
-	"github.com/k0kubun/pp"
 )
 
 func Test_check__sig(t *testing.T) {
@@ -26,14 +24,30 @@ func Test_check__sig(t *testing.T) {
 }
 func Test_check__game__type(t *testing.T) {
 	cases := map[GAME_TYPE]bool{
-		1:   true,
-		2:   true,
-		999: false,
-		998: false,
-		997: false,
+		GAME_TOMBALA: true,
+		GAME_KENO:    true,
+		999:          false,
+		998:          false,
+		997:          false,
 	}
 	for k, v := range cases {
 		if check__game__type(k) != v {
+			t.Fatal("case fails", k)
+		}
+	}
+}
+
+func Test_check__cmd(t *testing.T) {
+	cases := map[COMMAND]bool{
+		CMD_NEWGAME: true,
+		CMD_ENDGAME: true,
+		CMD_NEWBALL: true,
+		999:         false,
+		998:         false,
+		997:         false,
+	}
+	for k, v := range cases {
+		if check__cmd(k) != v {
 			t.Fatal("case fails", k)
 		}
 	}
@@ -43,91 +57,66 @@ func TestMUGSOFT_Parse(t *testing.T) {
 	cases := map[ERRCODE]MUGSOFT{
 		ERR_SUCCES: MUGSOFT{
 			signature: [2]byte{'m', 'g'},
-			GameType:  2,
+			GameType:  GAME_TOMBALA,
 			CMD:       CMD_NEWGAME,
 			DataLen:   1,
 			Data:      []byte{1},
 		},
 		ERR_DATA_LEN: MUGSOFT{
 			signature: [2]byte{'m', 'g'},
-			GameType:  2,
+			GameType:  GAME_TOMBALA,
 			CMD:       CMD_NEWGAME,
 			DataLen:   1,
 			Data:      []byte{1, 2},
 		},
 	}
 
-	for k, v := range cases {
+	for _, v := range cases {
+		var found = new(MUGSOFT)
+		_ = found.Parse(v.Bytes())
+		if !reflect.DeepEqual(found.Bytes(), v.Bytes()) {
+			t.Errorf("expected MUGSOFT: %v, found: %v ", found.Bytes(), v.Bytes())
+		}
+	}
+
+	cases2 := map[ERRCODE]MUGSOFT{
+		ERR_SUCCES: MUGSOFT{
+			signature: [2]byte{'m', 'g'},
+			GameType:  GAME_TOMBALA,
+			CMD:       CMD_NEWGAME,
+			DataLen:   1,
+			Data:      []byte{1},
+		},
+		ERR_DATA_LEN: MUGSOFT{
+			signature: [2]byte{'m', 'g'},
+			GameType:  GAME_KENO,
+			CMD:       CMD_NEWGAME,
+			DataLen:   1,
+			Data:      []byte{1, 2},
+		},
+		ERR_GAME_TYPE: MUGSOFT{
+			signature: [2]byte{'m', 'g'},
+			GameType:  999,
+			CMD:       CMD_PING,
+			DataLen:   1,
+			Data:      []byte{1},
+		},
+		ERR_COMMAND: MUGSOFT{
+			signature: [2]byte{'m', 'g'},
+			GameType:  GAME_TOMBALA,
+			CMD:       999,
+			DataLen:   1,
+			Data:      []byte{1},
+		},
+	}
+
+	for k, v := range cases2 {
 		var found = new(MUGSOFT)
 		err__code := found.Parse(v.Bytes())
 		if k != err__code {
 			t.Errorf("expected error code: %v, found: %v ", k, err__code)
 		}
-		if !reflect.DeepEqual(found.Bytes(), v.Bytes()) {
-			pp.Println(found)
-			t.Errorf("expected MUGSOFT: %v, found: %v ", found.Bytes(), v.Bytes())
-		}
 	}
-
-	input := MUGSOFT{
-		signature: [2]byte{255, 'g'},
-		GameType:  2,
-		CMD:       CMD_NEWGAME,
-		DataLen:   1,
-		Data:      []byte{1},
-	}
-	var found = new(MUGSOFT)
-
-	var data = make([]byte, m__sig__len)
-
-	data[pos__signature_start] = input.signature[0]
-	data[pos__signature_end] = input.signature[1]
-
-	game__type := tools.Int2LE(uint(input.GameType))
-	data = append(data, game__type[:2]...)
-
-	cmd := tools.Int2LE(uint(input.CMD))
-	data = append(data, cmd[:2]...)
-
-	data__len := tools.Int2LE(input.DataLen)
-	data = append(data, data__len[:]...)
-	data = append(data, input.Data...)
-
-	err__code := found.Parse(data)
-	if ERR_INVALID_SIG != err__code {
-		t.Errorf("expected error code: %v, found: %v ", ERR_INVALID_SIG, err__code)
-	}
-
-	input = MUGSOFT{
-		signature: [2]byte{'m', 'g'},
-		GameType:  999,
-		CMD:       CMD_NEWGAME,
-		DataLen:   1,
-		Data:      []byte{1},
-	}
-
-	found = new(MUGSOFT)
-
-	data = make([]byte, m__sig__len)
-
-	data[pos__signature_start] = input.signature[0]
-	data[pos__signature_end] = input.signature[1]
-
-	game__type = tools.Int2LE(uint(input.GameType))
-	data = append(data, game__type[:2]...)
-
-	cmd = tools.Int2LE(uint(input.CMD))
-	data = append(data, cmd[:2]...)
-
-	data__len = tools.Int2LE(input.DataLen)
-	data = append(data, data__len[:]...)
-	data = append(data, input.Data...)
-
-	err__code = found.Parse(data)
-	if ERR_GAME_TYPE != err__code {
-		t.Errorf("expected error code: %v, found: %v ", ERR_GAME_TYPE, err__code)
-	}
-
 }
 
 func TestMUGSOFT_Bytes(t *testing.T) {
