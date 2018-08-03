@@ -88,6 +88,9 @@ var command__map = map[COMMAND]string{
 }
 
 func (p *MUGSOFT) Parse(data []byte) ERRCODE {
+	if nil == data {
+		return ERR_NIL_DATA
+	}
 	if !check__sig(data[:2]) {
 		return ERR_INVALID_SIG
 	}
