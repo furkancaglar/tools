@@ -6,17 +6,10 @@ import (
 	"fmt"
 )
 
-type (
-	//GameID is constant that defines the games
-	GAME_TYPE uint16
-
-	COMMAND uint16
-)
-
 type MUGSOFT struct {
 	signature [2]byte
-	GameType  GAME_TYPE
-	CMD       COMMAND
+	Type      uint16
+	CMD       uint16
 	Data      []byte
 	DataLen   uint
 }
@@ -46,7 +39,7 @@ const (
 )
 const (
 	//CMD_ERROR is the command 0 which stads for error
-	CMD_ERROR COMMAND = iota
+	CMD_ERROR uint16 = iota
 	//CMD_HANDSHAKE handshake command
 	CMD_HANDSHAKE
 	//CMD_KEYCHECK checks the key sent after handshake
@@ -64,28 +57,6 @@ const (
 	//CMD_PING
 	CMD_PING
 )
-const (
-	_ GAME_TYPE = iota
-	GAME_TOMBALA
-	GAME_KENO
-)
-
-var game__map = map[GAME_TYPE]string{
-	GAME_TOMBALA: "TOMBALA",
-	GAME_KENO:    "KENO",
-}
-
-var command__map = map[COMMAND]string{
-	CMD_ERROR:     "ERROR",
-	CMD_HANDSHAKE: "HANDSHAKE",
-	CMD_KEYCHECK:  "KEY CHECK",
-	CMD_NEWGAME:   "NEW GAME",
-	CMD_NEWBALL:   "NEW BALL",
-	CMD_WINNING:   "WINNING",
-	CMD_ENDGAME:   "END GAME",
-	CMD_CARD:      "CARD",
-	CMD_PING:      "PING",
-}
 
 func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	if 0 == len(data) || nil == data {
@@ -98,20 +69,8 @@ func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	sig[0] = data[pos__signature_start]
 	sig[1] = data[pos__signature_end]
 	p.signature = sig
-
-	var game__type = GAME_TYPE(tools.LE2Int(data[pos__game_id:pos__cmd]))
-	if !check__game__type(game__type) {
-		return ERR_GAME_TYPE
-	}
-
-	p.GameType = game__type
-
-	var cmd = COMMAND(tools.LE2Int(data[pos__cmd:pos__data_len]))
-	if !check__cmd(cmd) {
-		return ERR_COMMAND
-	}
-
-	p.CMD = cmd
+	p.Type = uint16(tools.LE2Int(data[pos__game_id:pos__cmd]))
+	p.CMD = uint16(tools.LE2Int(data[pos__cmd:pos__data_len]))
 	p.DataLen = tools.LE2Int(data[pos__data_len : pos__data_len+4])
 	p.Data = data[pos__data_len+4:]
 
@@ -129,23 +88,6 @@ func check__sig(sig []byte) (isSigCorrect bool) {
 	return
 }
 
-func check__game__type(game__type GAME_TYPE) bool {
-	_, ok := game__map[game__type]
-	if !ok {
-		return false
-	}
-
-	return true
-}
-
-func check__cmd(cmd COMMAND) bool {
-	_, ok := command__map[cmd]
-	if !ok {
-		return false
-	}
-	return true
-}
-
 //Bytes it turns struct to slice of bytes according to `Mugsoft Protocol`
 func (p *MUGSOFT) Bytes() []byte {
 	p.signature = [2]byte{'m', 'g'}
@@ -154,7 +96,7 @@ func (p *MUGSOFT) Bytes() []byte {
 	data[pos__signature_start] = p.signature[0]
 	data[pos__signature_end] = p.signature[1]
 
-	game__type := tools.Int2LE(uint(p.GameType))
+	game__type := tools.Int2LE(uint(p.Type))
 	data = append(data, game__type[:2]...)
 
 	cmd := tools.Int2LE(uint(p.CMD))

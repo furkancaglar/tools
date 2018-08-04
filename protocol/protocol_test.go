@@ -22,49 +22,19 @@ func Test_check__sig(t *testing.T) {
 		}
 	}
 }
-func Test_check__game__type(t *testing.T) {
-	cases := map[GAME_TYPE]bool{
-		GAME_TOMBALA: true,
-		GAME_KENO:    true,
-		999:          false,
-		998:          false,
-		997:          false,
-	}
-	for k, v := range cases {
-		if check__game__type(k) != v {
-			t.Fatal("case fails", k)
-		}
-	}
-}
-
-func Test_check__cmd(t *testing.T) {
-	cases := map[COMMAND]bool{
-		CMD_NEWGAME: true,
-		CMD_ENDGAME: true,
-		CMD_NEWBALL: true,
-		999:         false,
-		998:         false,
-		997:         false,
-	}
-	for k, v := range cases {
-		if check__cmd(k) != v {
-			t.Fatal("case fails", k)
-		}
-	}
-}
 
 func TestMUGSOFT_Parse(t *testing.T) {
 	cases := map[ERRCODE]MUGSOFT{
 		ERR_SUCCES: MUGSOFT{
 			signature: [2]byte{'m', 'g'},
-			GameType:  GAME_TOMBALA,
+			Type:      1,
 			CMD:       CMD_NEWGAME,
 			DataLen:   1,
 			Data:      []byte{1},
 		},
 		ERR_DATA_LEN: MUGSOFT{
 			signature: [2]byte{'m', 'g'},
-			GameType:  GAME_TOMBALA,
+			Type:      1,
 			CMD:       CMD_NEWGAME,
 			DataLen:   1,
 			Data:      []byte{1, 2},
@@ -82,31 +52,17 @@ func TestMUGSOFT_Parse(t *testing.T) {
 	cases2 := map[ERRCODE]MUGSOFT{
 		ERR_SUCCES: MUGSOFT{
 			signature: [2]byte{'m', 'g'},
-			GameType:  GAME_TOMBALA,
+			Type:      1,
 			CMD:       CMD_NEWGAME,
 			DataLen:   1,
 			Data:      []byte{1},
 		},
 		ERR_DATA_LEN: MUGSOFT{
 			signature: [2]byte{'m', 'g'},
-			GameType:  GAME_KENO,
+			Type:      2,
 			CMD:       CMD_NEWGAME,
 			DataLen:   1,
 			Data:      []byte{1, 2},
-		},
-		ERR_GAME_TYPE: MUGSOFT{
-			signature: [2]byte{'m', 'g'},
-			GameType:  999,
-			CMD:       CMD_PING,
-			DataLen:   1,
-			Data:      []byte{1},
-		},
-		ERR_COMMAND: MUGSOFT{
-			signature: [2]byte{'m', 'g'},
-			GameType:  GAME_TOMBALA,
-			CMD:       999,
-			DataLen:   1,
-			Data:      []byte{1},
 		},
 	}
 
@@ -128,7 +84,7 @@ func TestMUGSOFT_Bytes(t *testing.T) {
 		true: cases{
 			input: MUGSOFT{
 				signature: [2]byte{'m', 'g'},
-				GameType:  2,
+				Type:      2,
 				CMD:       1,
 				DataLen:   1,
 				Data:      []byte{1},
@@ -138,7 +94,7 @@ func TestMUGSOFT_Bytes(t *testing.T) {
 		false: cases{
 			input: MUGSOFT{
 				signature: [2]byte{'m', 'g'},
-				GameType:  2,
+				Type:      2,
 				CMD:       1,
 				DataLen:   1,
 				Data:      []byte{1},
