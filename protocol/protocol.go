@@ -4,6 +4,7 @@ import (
 	"github.com/mugsoft/tools"
 	"io"
 	"fmt"
+	"unsafe"
 )
 
 type MUGSOFT struct {
@@ -71,8 +72,8 @@ func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	p.signature = sig
 	p.Type = uint16(tools.LE2Int(data[pos__game_id:pos__cmd]))
 	p.CMD = uint16(tools.LE2Int(data[pos__cmd:pos__data_len]))
-	p.DataLen = tools.LE2Int(data[pos__data_len : pos__data_len+4])
-	p.Data = data[pos__data_len+4:]
+	p.DataLen = tools.LE2Int(data[pos__data_len : pos__data_len+unsafe.Sizeof(p.DataLen)])
+	p.Data = data[pos__data_len+unsafe.Sizeof(p.DataLen):]
 
 	if p.DataLen != uint(len(p.Data)) {
 		return ERR_DATA_LEN
@@ -127,7 +128,7 @@ func (p *MUGSOFT) Scan(reader io.Reader) error {
 
 	total__data = append(total__data, meta...)
 
-	var remainning__data__len = int(tools.LE2Int(meta[pos__data_len : pos__data_len+4]))
+	var remainning__data__len = int(tools.LE2Int(meta[pos__data_len : pos__data_len+unsafe.Sizeof(p.DataLen)]))
 	var remainning__data = make([]byte, remainning__data__len)
 
 consume__remaining:
