@@ -33,9 +33,9 @@ const (
 	//pos__game_id position
 	pos__game_id
 	//pos__cmd is command position
-	pos__cmd = 4
+	pos__cmd = iota + 1
 	//pos__data_len defines the position of the byte which has the value how many more bytes are on the way
-	pos__data_len = 6
+	pos__data_len = iota + 1
 )
 const (
 	//CMD_ERROR is the command 0 which stads for error
