@@ -41,31 +41,31 @@ func TestMUGSOFT_Parse(t *testing.T) {
 			t.Errorf("expected MUGSOFT: %v, found: %v ", v.Bytes(), found.Bytes())
 		}
 	}
-	//
-	//cases2 := map[ERRCODE]MUGSOFT{
-	//	ERR_SUCCES: MUGSOFT{
-	//		signature: [2]byte{'m', 'g'},
-	//		Type:      1,
-	//		CMD:       CMD_NEWGAME,
-	//		DataLen:   1,
-	//		Data:      []byte{1},
-	//	},
-	//	ERR_DATA_LEN: MUGSOFT{
-	//		signature: [2]byte{'m', 'g'},
-	//		Type:      2,
-	//		CMD:       CMD_NEWGAME,
-	//		DataLen:   1,
-	//		Data:      []byte{1, 2},
-	//	},
-	//}
-	//
-	//for k, v := range cases2 {
-	//	var found = new(MUGSOFT)
-	//	err__code := found.Parse(v.Bytes())
-	//	if k != err__code {
-	//		t.Errorf("expected error code: %v, found: %v ", k, err__code)
-	//	}
-	//}
+
+	cases2 := map[ERRCODE]MUGSOFT{
+		ERR_SUCCES: MUGSOFT{
+			signature: [2]byte{'m', 'g'},
+			Type:      1,
+			CMD:       CMD_NEWGAME,
+			DataLen:   1,
+			Data:      []byte{1},
+		},
+		ERR_DATA_LEN: MUGSOFT{
+			signature: [2]byte{'m', 'g'},
+			Type:      2,
+			CMD:       CMD_NEWGAME,
+			DataLen:   1,
+			Data:      []byte{1, 2},
+		},
+	}
+
+	for k, v := range cases2 {
+		var found = new(MUGSOFT)
+		err__code := found.Parse(v.Bytes())
+		if k != err__code {
+			t.Errorf("expected error code: %v, found: %v ", k, err__code)
+		}
+	}
 }
 
 func TestMUGSOFT_Bytes(t *testing.T) {
