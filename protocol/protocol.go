@@ -98,10 +98,10 @@ func (p *MUGSOFT) Bytes() []byte {
 	data[pos__signature_end] = p.signature[1]
 
 	game__type := tools.Int2LE(uint(p.Type))
-	data = append(data, game__type[:2]...)
+	data = append(data, game__type[:unsafe.Sizeof(p.Type)]...)
 
 	cmd := tools.Int2LE(uint(p.CMD))
-	data = append(data, cmd[:2]...)
+	data = append(data, cmd[:unsafe.Sizeof(p.CMD)]...)
 
 	data__len := tools.Int2LE(p.DataLen)
 	data = append(data, data__len[:]...)
@@ -126,7 +126,7 @@ func (p *MUGSOFT) Scan(reader io.Reader) error {
 		return fmt.Errorf("signature error")
 	}
 
-	total__data = append(total__data, meta...)
+	total__data = meta
 
 	var remainning__data__len = int(tools.LE2Int(meta[pos__data_len : pos__data_len+unsafe.Sizeof(p.DataLen)]))
 	var remainning__data = make([]byte, remainning__data__len)
@@ -145,7 +145,7 @@ consume__remaining:
 	}
 
 	err__code := p.Parse(total__data)
-	if 0 != err__code {
+	if ERR_SUCCES != err__code {
 		return fmt.Errorf("parse error code %v", err__code)
 	}
 
