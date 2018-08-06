@@ -10,7 +10,7 @@ func TestInt2LE(t *testing.T) {
 		expected [4]byte
 		pass     bool
 	}
-	casesMap := map[uint]cases{
+	casesMap := map[uint32]cases{
 		1: cases{
 			expected: [4]byte{1, 0, 0, 0},
 			pass:     true,
@@ -37,7 +37,7 @@ func TestLE2Int(t *testing.T) {
 		input []byte
 		pass  bool
 	}
-	casesMap := map[uint]cases{
+	casesMap := map[uint32]cases{
 		1: cases{
 			input: []byte{1},
 			pass:  true,

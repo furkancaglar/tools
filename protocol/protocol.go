@@ -12,7 +12,7 @@ type MUGSOFT struct {
 	Type      uint16
 	CMD       uint16
 	Data      []byte
-	DataLen   uint
+	DataLen   uint32
 }
 
 const (
@@ -35,8 +35,10 @@ const (
 	pos__game_id
 	//pos__cmd is command position
 	pos__cmd = iota + 1
+	_
 	//pos__data_len defines the position of the byte which has the value how many more bytes are on the way
-	pos__data_len = iota + 1
+	pos__data_len
+
 )
 const (
 	//CMD_ERROR is the command 0 which stads for error
@@ -63,6 +65,9 @@ func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	if 0 == len(data) || nil == data {
 		return ERR_NIL_DATA
 	}
+	if m__meta_len > len(data) {
+		return ERR_META_LEN
+	}
 	if !check__sig(data[:2]) {
 		return ERR_INVALID_SIG
 	}
@@ -75,7 +80,7 @@ func (p *MUGSOFT) Parse(data []byte) ERRCODE {
 	p.DataLen = tools.LE2Int(data[pos__data_len : pos__data_len+unsafe.Sizeof(p.DataLen)])
 	p.Data = data[pos__data_len+unsafe.Sizeof(p.DataLen):]
 
-	if p.DataLen != uint(len(p.Data)) {
+	if p.DataLen != uint32(len(p.Data)) {
 		return ERR_DATA_LEN
 	}
 
@@ -97,10 +102,10 @@ func (p *MUGSOFT) Bytes() []byte {
 	data[pos__signature_start] = p.signature[0]
 	data[pos__signature_end] = p.signature[1]
 
-	game__type := tools.Int2LE(uint(p.Type))
+	game__type := tools.Int2LE(uint32(p.Type))
 	data = append(data, game__type[:unsafe.Sizeof(p.Type)]...)
 
-	cmd := tools.Int2LE(uint(p.CMD))
+	cmd := tools.Int2LE(uint32(p.CMD))
 	data = append(data, cmd[:unsafe.Sizeof(p.CMD)]...)
 
 	data__len := tools.Int2LE(p.DataLen)
