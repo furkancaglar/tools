@@ -56,6 +56,7 @@ sock.on("data", function (d) {
     }
 })
 sock.on("end", _ => console.log("connection ended"))
+sock.on("error", (e) => console.log(e))
 setInterval(_ => {
 
         sock.write("pong")
