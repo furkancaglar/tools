@@ -24,6 +24,17 @@ let token = ""
 let balls = []
 let stop = false
 
+function retry(e) {
+    inc++
+
+    setTimeout(function () {
+        if (0 == inc) return
+        console.log(e)
+        sock.connect({host: process.env.SOCKET_HOST || "localhost", port: process.env.SOCKET_PORT || 1111})
+    }, 1000 * inc)
+
+}
+
 sock.connect({host: process.env.SOCKET_HOST || "localhost", port: process.env.SOCKET_PORT || 1111})
 sock.on("data", function (d) {
 
@@ -32,11 +43,9 @@ sock.on("data", function (d) {
         data = JSON.parse(d.toString())
 
         if (0 == data.rooms.length) {
-            console.log(data.data)
             io.emit(data.event, data.data)
         }
         data.rooms.forEach(function (room) {
-            console.log(data.data)
             io.of("/" + room).emit(data.event, data.data)
         });
     } catch (e) {
@@ -55,8 +64,15 @@ sock.on("data", function (d) {
         })
     }
 })
-sock.on("end", _ => console.log("connection ended"))
-sock.on("error", (e) => console.log(e))
+
+sock.on("connect", function () {
+    inc = 0
+});
+sock.on("end", retry)
+
+var inc = 0
+sock.on("error", retry)
+
 setInterval(_ => {
 
         sock.write("pong")
