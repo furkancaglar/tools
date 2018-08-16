@@ -45,7 +45,23 @@ func Broadcast(d []byte, opts *Opts) {
 	opts.lck.Lock()
 	defer opts.lck.Unlock()
 	for c := range opts.clients {
-		c.Write(d)
+		go func() {
+			var stop = make(chan bool)
+			go func() {
+				c.Write(d)
+				stop <- true
+			}()
+
+			select {
+			case <-stop:
+				return
+			case <-time.After(time.Minute):
+				opts.lck.Lock()
+				opts.clients[c].sig__kil <- true
+				opts.lck.Unlock()
+				return
+			}
+		}()
 	}
 }
 func BroadcastJSON(data *Socket_data, opts *Opts) {
@@ -57,7 +73,23 @@ func BroadcastJSON(data *Socket_data, opts *Opts) {
 	opts.lck.Lock()
 	defer opts.lck.Unlock()
 	for c := range opts.clients {
-		c.Write(d)
+		go func() {
+			var stop = make(chan bool)
+			go func() {
+				c.Write(d)
+				stop <- true
+			}()
+
+			select {
+			case <-stop:
+				return
+			case <-time.After(time.Minute):
+				opts.lck.Lock()
+				opts.clients[c].sig__kil <- true
+				opts.lck.Unlock()
+				return
+			}
+		}()
 	}
 }
 func pong__handler(conn *connection, opts *Opts) {
