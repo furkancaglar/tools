@@ -8,6 +8,7 @@ import (
 	"fmt"
 )
 
+//Start_listen starts listening clients; options for listening must be entered as parameter
 func Start_listen(opts *Opts) error {
 	//TODO: logger needed
 	log.Println("ws listen address : ", opts.Address)
@@ -41,6 +42,7 @@ func Start_listen(opts *Opts) error {
 	}
 	return nil
 }
+//Broadcast writes the unstructured data into clients
 func Broadcast(d []byte, opts *Opts) {
 	opts.lck.Lock()
 	defer opts.lck.Unlock()
@@ -64,6 +66,7 @@ func Broadcast(d []byte, opts *Opts) {
 		}()
 	}
 }
+//BroadcastJSON writes the structured (json) data into clients
 func BroadcastJSON(data *Socket_data, opts *Opts) {
 	d, err := json.Marshal(data)
 	if nil != err {
