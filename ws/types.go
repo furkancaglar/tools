@@ -17,7 +17,6 @@ type connection struct {
 	con__lock sync.Mutex
 	con       net.Conn
 	sig__kil  chan bool
-	ticker    *time.Ticker
 }
 
 type Socket_data struct {

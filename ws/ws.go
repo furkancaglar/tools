@@ -93,14 +93,11 @@ func BroadcastJSON(data *Socket_data, opts *Opts) {
 	}
 }
 func pong__handler(conn *connection, opts *Opts) {
-	conn.ticker = time.NewTicker(opts.Time_out)
-	defer conn.ticker.Stop()
 	killSent := false
 	var heartBeat = make(chan bool)
 	go func() {
 		var buf = make([]byte, 1024)
 		for {
-			<-conn.ticker.C
 			_, err := conn.con.Read(buf)
 			if nil != err {
 				conn.con__lock.Lock()
@@ -115,13 +112,11 @@ func pong__handler(conn *connection, opts *Opts) {
 		}
 	}()
 	for {
-		//this is here because ticker writes immediately it starts so this cause connection close immediately
-		<-conn.ticker.C
 		select {
 		case <-heartBeat:
 		case <-conn.sig__kil:
 			return
-		case <-conn.ticker.C:
+		case <-time.After(opts.Time_out):
 
 			conn.con__lock.Lock()
 
