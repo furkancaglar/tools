@@ -5,16 +5,19 @@ flags.defineInteger('port', 1112, 'port to serve socket.io');
 flags.defineInteger('timeout', 1000, 'timeout for pong');
 flags.parse()
 
-if (flags.get("port") > 65000) {
+if (flags.get("port") > 65000)
+{
     throw new Error("invalid port")
 }
 const sock = new net.Socket()
 const io = require("socket.io")(flags.get("port"))
 
-function retry(e) {
+function retry(e)
+{
     inc++
 
-    setTimeout(function () {
+    setTimeout(function ()
+    {
         if (0 == inc) return
         console.log("error : ", e)
         sock.connect({host: process.env.SOCKET_HOST || "localhost", port: process.env.SOCKET_PORT || 1111})
@@ -23,35 +26,43 @@ function retry(e) {
 }
 
 sock.connect({host: process.env.SOCKET_HOST || "localhost", port: process.env.SOCKET_PORT || 1111})
-sock.on("data", function (d) {
+sock.on("data", function (d)
+{
 
     let data
-    try {
+    try
+    {
         data = JSON.parse(d.toString())
 
-        if (!data.rooms || !data.rooms.length) {
+        if (!data.rooms || !data.rooms.length)
+        {
             io.emit(data.event, data.data)
         }
-        data.rooms.forEach(function (room) {
+        data.rooms.forEach(function (room)
+        {
             io.of("/" + room).emit(data.event, data.data)
         });
-    } catch (e) {
+    } catch (e)
+    {
         let dt = d.toString().split("}{")
         if (dt.length <= 1) return
         dt.forEach(field => {
             if (field[0] != "{") field = "{" + field
             if (field[field.length - 1] != "}") field += "}"
-            try {
+            try
+            {
                 data = JSON.parse(field)
                 io.emit(data.type, field)
-            } catch (e) {
+            } catch (e)
+            {
                 console.error(e)
             }
         })
     }
 })
 
-sock.on("connect", function () {
+sock.on("connect", function ()
+{
     inc = 0
 });
 sock.on("end", retry)
