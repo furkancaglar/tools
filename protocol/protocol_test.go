@@ -137,7 +137,7 @@ func TestMUGSOFT_Scan(t *testing.T) {
 	var prot = new(MUGSOFT)
 
 	var dt = make([]byte, (bytesize.MB*50)+m__meta_len)
-	var file, err = os.Open("50mb__file.bytes")
+	var file, err = os.Open("1KB__file.bytes")
 	if nil != err {
 		fmt.Errorf("os.Open error : %v", err)
 		return
