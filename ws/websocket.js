@@ -48,7 +48,6 @@ sock.on("data", function (d)
 {
         let dt = d.toString().split("}{")
         if (dt.length <= 1) return
-        console.log("field split  ", dt)
         dt.forEach(field => {
             if (field[0] != "{") field = "{" + field
             if (field[field.length - 1] != "}") field += "}"
