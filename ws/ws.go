@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const __MIN_BETWEEN = time.Millisecond * 50
+const __MIN_BETWEEN = int64(time.Millisecond * 50)
 
 //Start_listen starts listening clients; options for listening must be entered as parameter
 func Start_listen(opts *Opts) error {
@@ -50,20 +50,18 @@ func Start_listen(opts *Opts) error {
 func Broadcast(d []byte, opts *Opts) {
 	opts.lck.Lock()
 	defer opts.lck.Unlock()
-	for c := range opts.clients {
+	for c, con__struct := range opts.clients {
 		go func() {
 			go func() {
 				c.Write(d)
-				opts.clients[c].stop__writing <- true
+				con__struct.stop__writing <- true
 			}()
 
 			select {
-			case <-opts.clients[c].stop__writing:
+			case <-con__struct.stop__writing:
 				return
 			case <-time.After(time.Minute):
-				opts.lck.Lock()
-				opts.clients[c].sig__kil <- true
-				opts.lck.Unlock()
+				con__struct.sig__kil <- true
 				return
 			}
 		}()
@@ -85,9 +83,9 @@ func pong__handler(conn *connection, opts *Opts) {
 	go func() {
 		var buf = make([]byte, 1024)
 		var __last__msg__time = time.Now().UnixNano()
-		var __now = __last__msg__time + int64(__MIN_BETWEEN) + 10
+		var __now = __last__msg__time + __MIN_BETWEEN + 10
 		for {
-			if __now < __last__msg__time+int64(__MIN_BETWEEN) {
+			if __now < __last__msg__time+__MIN_BETWEEN {
 				conn.sig__kil <- true
 				//TODO: logger needed
 				fmt.Println("too often data!")
@@ -115,15 +113,15 @@ func pong__handler(conn *connection, opts *Opts) {
 			return
 		case <-time.After(opts.Time_out):
 
-			conn.con__lock.Lock()
-
 			if !killSent {
 				go func() {
+					conn.con__lock.Lock()
 					conn.sig__kil <- true
+					conn.con__lock.Unlock()
 				}()
 				killSent = true
 			}
-			conn.con__lock.Unlock()
+
 			return
 		}
 	}
