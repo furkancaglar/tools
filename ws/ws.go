@@ -94,8 +94,6 @@ func pong__handler(conn *connection, opts *Opts) {
 			__last__msg__time = __now
 			_, err := conn.con.Read(buf)
 			if nil != err {
-				conn.con__lock.Lock()
-				defer conn.con__lock.Unlock()
 				if !killSent {
 					killSent = true
 					conn.sig__kil <- true
@@ -115,9 +113,7 @@ func pong__handler(conn *connection, opts *Opts) {
 
 			if !killSent {
 				go func() {
-					conn.con__lock.Lock()
 					conn.sig__kil <- true
-					conn.con__lock.Unlock()
 				}()
 				killSent = true
 			}

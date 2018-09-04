@@ -25,6 +25,18 @@ function retry(e)
 
 }
 
+function emit__data(data)
+{
+    if (!data.rooms || !data.rooms.length)
+    {
+        io.emit(data.event, data.data)
+    }
+    data.rooms.forEach(function (room)
+    {
+        io.of("/" + room).emit(data.event, data.data)
+    });
+}
+
 sock.connect({host: process.env.SOCKET_HOST || "localhost", port: process.env.SOCKET_PORT || 1111})
 sock.on("data", function (d)
 {
@@ -33,15 +45,7 @@ sock.on("data", function (d)
     try
     {
         data = JSON.parse(d.toString())
-
-        if (!data.rooms || !data.rooms.length)
-        {
-            io.emit(data.event, data.data)
-        }
-        data.rooms.forEach(function (room)
-        {
-            io.of("/" + room).emit(data.event, data.data)
-        });
+        emit__data(data)
     } catch (e)
     {
         let dt = d.toString().split("}{")
@@ -52,7 +56,7 @@ sock.on("data", function (d)
             try
             {
                 data = JSON.parse(field)
-                io.emit(data.type, field)
+                emit__data(data)
             } catch (e)
             {
                 console.error(e)
