@@ -2,12 +2,15 @@ package ws
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net"
 	"time"
-	"log"
-	"fmt"
 )
 
+const __MIN_BETWEEN = int64(time.Millisecond * 50)
+
+//Start_listen starts listening clients; options for listening must be entered as parameter
 func Start_listen(opts *Opts) error {
 	//TODO: logger needed
 	log.Println("ws listen address : ", opts.Address)
@@ -27,6 +30,7 @@ func Start_listen(opts *Opts) error {
 		opts.clients[client] = new(connection)
 		opts.clients[client].con = client
 		opts.clients[client].sig__kil = make(chan bool)
+		opts.clients[client].stop__writing = make(chan bool)
 		opts.lck.Unlock()
 
 		go pong__handler(opts.clients[client], opts)
@@ -41,57 +45,71 @@ func Start_listen(opts *Opts) error {
 	}
 	return nil
 }
+
+//Broadcast writes the unstructured data into clients
 func Broadcast(d []byte, opts *Opts) {
 	opts.lck.Lock()
 	defer opts.lck.Unlock()
-	for c := range opts.clients {
-		c.Write(d)
+	for c, con__struct := range opts.clients {
+		go func() {
+			go func() {
+				c.Write(d)
+				con__struct.stop__writing <- true
+			}()
+
+			select {
+			case <-con__struct.stop__writing:
+				return
+			case <-time.After(time.Minute):
+				con__struct.sig__kil <- true
+				return
+			}
+		}()
 	}
 }
+
+//BroadcastJSON writes the structured (json) data into clients
 func BroadcastJSON(data *Socket_data, opts *Opts) {
 	d, err := json.Marshal(data)
 	if nil != err {
 		//TODO: logger needed
 		fmt.Errorf("cannot serialize json : %v", err)
 	}
-	opts.lck.Lock()
-	defer opts.lck.Unlock()
-	for c := range opts.clients {
-		c.Write(d)
-	}
+	Broadcast(d, opts)
 }
 func pong__handler(conn *connection, opts *Opts) {
-	conn.ticker = time.NewTicker(opts.Time_out)
-	defer conn.ticker.Stop()
 	killSent := false
 	var heartBeat = make(chan bool)
 	go func() {
 		var buf = make([]byte, 1024)
+		var __last__msg__time = time.Now().UnixNano()
+		var __now = __last__msg__time + __MIN_BETWEEN + 10
 		for {
-			<-conn.ticker.C
+			if __now < __last__msg__time+__MIN_BETWEEN {
+				conn.sig__kil <- true
+				//TODO: logger needed
+				fmt.Println("too often data!")
+				return
+			}
+			__last__msg__time = __now
 			_, err := conn.con.Read(buf)
 			if nil != err {
-				conn.con__lock.Lock()
-				defer conn.con__lock.Unlock()
 				if !killSent {
 					killSent = true
 					conn.sig__kil <- true
 				}
 				return
 			}
+			__now = time.Now().UnixNano()
 			heartBeat <- true
 		}
 	}()
 	for {
-		//this is here because ticker writes immediately it starts so this cause connection close immediately
-		<-conn.ticker.C
 		select {
 		case <-heartBeat:
 		case <-conn.sig__kil:
 			return
-		case <-conn.ticker.C:
-
-			conn.con__lock.Lock()
+		case <-time.After(opts.Time_out):
 
 			if !killSent {
 				go func() {
@@ -99,7 +117,7 @@ func pong__handler(conn *connection, opts *Opts) {
 				}()
 				killSent = true
 			}
-			conn.con__lock.Unlock()
+
 			return
 		}
 	}

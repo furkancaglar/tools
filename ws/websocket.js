@@ -1,61 +1,64 @@
 const net = require("net")
-const request = require("request")
-const arglist = process.argv
-if (arglist.length < 3)
-{
-    throw new Error("no port name is specified")
-}
-else if (!/^\d{2,5}$/.test(arglist[2]))
-{
-    console.log(arglist[2])
-    throw new Error("invalid port")
-}
-let port = parseInt(arglist[2])
-if (port > 65000)
+const flags = require("flags")
+
+flags.defineInteger('port', 1112, 'port to serve socket.io');
+flags.defineInteger('timeout', 1000, 'timeout for pong');
+flags.parse()
+
+if (flags.get("port") > 65000)
 {
     throw new Error("invalid port")
 }
 const sock = new net.Socket()
-const io = require("socket.io")(port)
+const io = require("socket.io")(flags.get("port"))
+
 function retry(e)
 {
     inc++
 
     setTimeout(function ()
-{
+    {
         if (0 == inc) return
-        console.log(e)
+        console.log("error : ", e)
         sock.connect({host: process.env.SOCKET_HOST || "localhost", port: process.env.SOCKET_PORT || 1111})
     }, 1000 * inc)
 
 }
 
+function emit__data(data)
+{
+    if (!data.rooms || !data.rooms.length)
+    {
+        io.emit(data.event, data.data)
+    }
+    data.rooms.forEach(function (room)
+    {
+        io.of("/" + room).emit(data.event, data.data)
+    });
+}
+
 sock.connect({host: process.env.SOCKET_HOST || "localhost", port: process.env.SOCKET_PORT || 1111})
 sock.on("data", function (d)
 {
+
     let data
-    try {
+    try
+    {
         data = JSON.parse(d.toString())
-        if (!data.rooms||!data.rooms.length)
-{
-            io.emit(data.event, data.data)
-        }
-        data.rooms.forEach(function (room)
-{
-            io.of("/" + room).emit(data.event, data.data)
-        });
+        emit__data(data)
     } catch (e)
-{
+    {
         let dt = d.toString().split("}{")
         if (dt.length <= 1) return
         dt.forEach(field => {
             if (field[0] != "{") field = "{" + field
             if (field[field.length - 1] != "}") field += "}"
-            try {
+            try
+            {
                 data = JSON.parse(field)
-                io.emit(data.type, field)
+                emit__data(data)
             } catch (e)
-{
+            {
                 console.error(e)
             }
         })
@@ -78,4 +81,4 @@ setInterval(_ => {
             process.stdout.write("\rconnected clients num:" + clients.length)
         })
     }
-    , 500)
+    , flags.get("timeout"))
