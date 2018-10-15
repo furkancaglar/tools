@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const __MIN_BETWEEN = int64(time.Millisecond * 50)
+const __MIN_BETWEEN = int64(time.Millisecond * 10)
 
 //Start_listen starts listening clients; options for listening must be entered as parameter
 func Start_listen(opts *Opts) error {
@@ -44,6 +44,12 @@ func Start_listen(opts *Opts) error {
 		}(client)
 	}
 	return nil
+}
+
+func Conn_client_num(opts *Opts) int {
+	opts.lck.Lock()
+	defer opts.lck.Unlock()
+	return len(opts.clients)
 }
 
 //Broadcast writes the unstructured data into clients
@@ -83,7 +89,7 @@ func pong__handler(conn *connection, opts *Opts) {
 	go func() {
 		var buf = make([]byte, 1024)
 		var __last__msg__time = time.Now().UnixNano()
-		var __now = __last__msg__time + __MIN_BETWEEN + 10
+		var __now = __last__msg__time + __MIN_BETWEEN + 4
 		for {
 			if __now < __last__msg__time+__MIN_BETWEEN {
 				conn.sig__kil <- true
