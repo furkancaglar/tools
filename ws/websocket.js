@@ -30,6 +30,7 @@ function emit__data(data)
     if (!data.rooms || !data.rooms.length)
     {
         io.emit(data.event, data.data)
+        return
     }
     data.rooms.forEach(function (room)
     {
