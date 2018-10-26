@@ -7,8 +7,8 @@ import (
 	"net"
 	"time"
 )
-
-const __MIN_BETWEEN = int64(time.Millisecond * 10)
+// it could be used as another functionality in the future so that's why commented out
+//const __MIN_BETWEEN = int64(time.Millisecond * 10)
 
 //Start_listen starts listening clients; options for listening must be entered as parameter
 func Start_listen(opts *Opts) error {
@@ -88,16 +88,16 @@ func pong__handler(conn *connection, opts *Opts) {
 	var heartBeat = make(chan bool)
 	go func() {
 		var buf = make([]byte, 1024)
-		var __last__msg__time = time.Now().UnixNano()
-		var __now = __last__msg__time + __MIN_BETWEEN + 4
+		//var __last__msg__time = time.Now().UnixNano()
+		//var __now = __last__msg__time + __MIN_BETWEEN + 4
 		for {
-			if __now < __last__msg__time+__MIN_BETWEEN {
-				conn.sig__kil <- true
-				//TODO: logger needed
-				fmt.Println("too often data!")
-				return
-			}
-			__last__msg__time = __now
+			//if __now < __last__msg__time+__MIN_BETWEEN {
+			//	conn.sig__kil <- true
+			//	//TODO: logger needed
+			//	fmt.Println("too often data!")
+			//	return
+			//}
+			//__last__msg__time = __now
 			_, err := conn.con.Read(buf)
 			if nil != err {
 				if !killSent {
@@ -106,7 +106,7 @@ func pong__handler(conn *connection, opts *Opts) {
 				}
 				return
 			}
-			__now = time.Now().UnixNano()
+			//__now = time.Now().UnixNano()
 			heartBeat <- true
 		}
 	}()
