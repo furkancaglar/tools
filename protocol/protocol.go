@@ -1,7 +1,7 @@
 package protocol
 
 import (
-	"github.com/mugsoft/tools"
+	"github.com/furkancaglar/tools"
 	"io"
 	"fmt"
 	"unsafe"

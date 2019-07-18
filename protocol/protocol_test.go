@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"os"
 	"fmt"
-	"github.com/mugsoft/tools/bytesize"
+	"github.com/furkancaglar/tools/bytesize"
 	)
 
 func Test_check__sig(t *testing.T) {
